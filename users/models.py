@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.hashers import make_password
 
 from .managers import UserManager
 
@@ -33,4 +34,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_table = 'User'
         verbose_name = _('User')
         verbose_name_plural = _('Users')
+
+    def delete(self, *args, **kwargs):
+        print("The object")
+        # Delete the image file from the file system
+        if self.avatar:
+            storage, path = self.avatar.storage, self.avatar.path
+            if path and storage.exists(path):
+                storage.delete(path)
+        # Call the superclass delete method to delete the instance
+        super().delete(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+   
+        if self.password and not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$', 'argon2')):
+        
+            self.password = make_password(self.password)
+        
+        super().save(*args, **kwargs)
 

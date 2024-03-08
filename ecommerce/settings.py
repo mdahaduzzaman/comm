@@ -1,6 +1,7 @@
 from pathlib import Path
 from dotenv.main import load_dotenv
 from os import getenv
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'ecommerce.middlewares.ServerExceptionMiddleware'
 ]
 
 ROOT_URLCONF = 'ecommerce.urls'
@@ -132,7 +134,7 @@ EMAIL_HOST_USER = getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = getenv('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
 
-PASSWORD_RESET_TIMEOUT = 1800 # 3 days, in seconds
+PASSWORD_RESET_TIMEOUT = 600  # 10 minutes, in seconds
 
 
 # jwt authentication setup
@@ -141,3 +143,26 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+
+SIMPLE_JWT = {
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.MyTokenObtainPairSerializer",
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Adjust the token lifetime as per your requirement
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+
+    # Include timeframe info in token
+    'INCLUDE_CLAIMS': {
+        'issued_at': 'iat',
+        'expiration_time': 'exp',
+    }
+}
+
+AUTH_COOKIE = 'access'
+AUTH_COOKIE_MAX_AGE = 60 * 60 * 24
+AUTH_COOKIE_SECURE = getenv('AUTH_COOKIE_SECURE', 'True') == 'True'
+AUTH_COOKIE_HTTP_ONLY = True
+AUTH_COOKIE_PATH = '/'
+AUTH_COOKIE_SAMESITE = 'None'

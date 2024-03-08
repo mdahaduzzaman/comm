@@ -6,17 +6,17 @@ from .models import User
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
-    password2 = serializers.CharField(write_only=True, required=True)
+    confirm_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = User
-        fields = ('password', 'password2', 'email', 'full_name', 'avatar')
+        fields = ('password', 'confirm_password', 'email', 'full_name', 'avatar')
         extra_kwargs = {
             'full_name': {'required': True}
         }
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
+        if attrs['password'] != attrs['confirm_password']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
 
         return attrs
