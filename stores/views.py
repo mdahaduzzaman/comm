@@ -22,7 +22,8 @@ class ShopModelViewSet(ModelViewSet):
         instance = self.get_object()
         if 'owner' in request.data and str(instance.owner.id) != str(request.data.get('owner')):
             return Response({'owner': "owner can't be changed"}, status=status.HTTP_403_FORBIDDEN)
-        if 'is_active' in request.data and request.data.get('is_active') == "True" and instance.owner.is_staff == False:
+
+        if 'is_active' in request.data and str(request.data.get('is_active')).lower() == 'true' and instance.owner.is_staff == False:
             """Is active can be set True by only AdminUser"""
             return Response({'is_active': "Can changed by admin user only"}, status=status.HTTP_403_FORBIDDEN)
         partial = kwargs.pop('partial', False)
@@ -36,3 +37,6 @@ class CategoryModelViewSet(ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [IsAdminUserOrReadOnly]
 
+class ProductModelViewSet(ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
