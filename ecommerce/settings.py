@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-    'store',
+    'rest_framework_simplejwt.token_blacklist',
+    'stores',
     'users',
 ]
 
@@ -104,7 +105,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 
 USE_I18N = True
 
@@ -146,18 +147,11 @@ REST_FRAMEWORK = {
 
 
 SIMPLE_JWT = {
-    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.MyTokenObtainPairSerializer",
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),  # Adjust the token lifetime as per your requirement
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': True,
-
-    # Include timeframe info in token
-    'INCLUDE_CLAIMS': {
-        'issued_at': 'iat',
-        'expiration_time': 'exp',
-    }
+    'UPDATE_LAST_LOGIN': True
 }
 
 AUTH_COOKIE = 'access'

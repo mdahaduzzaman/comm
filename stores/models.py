@@ -1,8 +1,9 @@
 import uuid
 from django.db import models
-from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
-from users.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Shop(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -20,30 +21,13 @@ class Shop(models.Model):
     def __str__(self):
         return self.name
     
-class ShopAdmin(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="shop_admins")
-    permissions = models.ManyToManyField(Permission)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = 'ShopAdmin'
-        verbose_name = _('ShopAdmin')
-        verbose_name_plural = _('ShopAdmins')
-
-    def __str__(self):
-        return self.user.email
-    
 def category_image_upload_path(instance, filename):
     """A utility function for generating category image upload path"""
     return f'Category/Image/{instance.name}_{filename}'
 
 class Category(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=70)
+    name = models.CharField(max_length=70, unique=True)
     category_image = models.ImageField(upload_to=category_image_upload_path)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -57,6 +41,15 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    def delete(self, *args, **kwargs):
+        # Delete the image file from the file system
+        if self.category_image:
+            storage, path = self.category_image.storage, self.category_image.path
+            if path and storage.exists(path):
+                storage.delete(path)
+        # Call the superclass delete method to delete the instance
+        super().delete(*args, **kwargs)
+
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=100)
@@ -67,7 +60,7 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    thumbnail = models.OneToOneField('store.ProductImage', null=True, blank=True, on_delete=models.CASCADE, related_name='main_product')
+    thumbnail = models.OneToOneField('stores.ProductImage', null=True, blank=True, on_delete=models.CASCADE, related_name='main_product')
 
     class Meta:
         db_table = 'Product'

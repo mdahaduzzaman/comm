@@ -22,6 +22,7 @@ from .models import User
 
 def get_token_cookie(request):
     """function for getting the refresh token from the cookie"""
+    print("Cokkie", request.COOKIES.get("refresh"))
     return request.COOKIES.get("refresh") or None
 
 
@@ -29,8 +30,8 @@ def set_token_cookie(response, refresh_token):
     response.set_cookie(
         "refresh",
         refresh_token,
-        max_age=settings.AUTH_COOKIE_MAX_AGE,
-        path=settings.AUTH_COOKIE_PATH,
+        max_age=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
+        path="/api/users/token/refresh/",
         secure=settings.AUTH_COOKIE_SECURE,
         httponly=settings.AUTH_COOKIE_HTTP_ONLY,
         samesite=settings.AUTH_COOKIE_SAMESITE,
@@ -93,6 +94,8 @@ def activate_account(_request, uidb64, token):
 def request_password_reset(request):
     """Request password reset ask the for an email and send the link of password reset using email"""
     email = request.data.get("email")
+    if not email:
+        return Response({'email': "Email isn't found"}, status=status.HTTP_400_BAD_REQUEST)
     redirect_url = request.data.get("redirect_url")
 
     try:
@@ -149,35 +152,36 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             refresh_token = response.data.get("refresh")
 
             set_token_cookie(response, refresh_token)
-            response.data["access_token_expiry"] = settings.SIMPLE_JWT[
-                "ACCESS_TOKEN_LIFETIME"
-            ]
-            response.data["refresh_token_expiry"] = settings.SIMPLE_JWT[
-                "REFRESH_TOKEN_LIFETIME"
-            ]
+            current_time = datetime.now()
+
+            response.data["access_token_expiry"] = (current_time + settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]).strftime("%Y-%m-%d %H:%M:%S")
+            response.data["refresh_token_expiry"] = (current_time + settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"]).strftime("%Y-%m-%d %H:%M:%S")
 
         return response
-
 
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         """This is the simple renewel token view ask for refresh token and send new token"""
-        refresh_token = get_token_cookie(request)
+        # refresh_token = get_token_cookie(request)
+        # print(refresh_token)
 
-        if refresh_token:
-            request.data["refresh"] = refresh_token
+        # if refresh_token:
+        #     request.data._mutable = True
+        #     request.data.update({'refresh': refresh_token})
 
         response = super().post(request, *args, **kwargs)
-
         if response.status_code == 200:
             refresh_token = response.data.get("refresh")
             set_token_cookie(response, refresh_token)
+            current_time = datetime.now()
 
-        response.data["access_token_expiry"] = settings.SIMPLE_JWT[
-            "ACCESS_TOKEN_LIFETIME"
-        ]
-        response.data["refresh_token_expiry"] = settings.SIMPLE_JWT[
-            "REFRESH_TOKEN_LIFETIME"
-        ]
+            response.data["access_token_expiry"] = (current_time + settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]).strftime("%Y-%m-%d %H:%M:%S")
+            response.data["refresh_token_expiry"] = (current_time + settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"]).strftime("%Y-%m-%d %H:%M:%S")
 
         return response
+
+@api_view(['GET'])
+def logout(request):
+    response = Response({"message": "Logged out successfully"})
+    response.delete_cookie('refresh')
+    return response
