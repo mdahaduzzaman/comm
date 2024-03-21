@@ -1,19 +1,27 @@
 from rest_framework import permissions
+from django.contrib.auth import get_user_model
 
-class IsOwnerOrReadOnly(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it.
-    """
-
-    def has_object_permission(self, request, view, obj):
+User = get_user_model()
+class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
+    """only authenticated user or shop owner can have the permissions or read only"""
+    def has_permission(self, request, view):
         # Read permissions are allowed to any request,
         # so we'll always allow GET, HEAD or OPTIONS requests.
         if request.method in permissions.SAFE_METHODS:
             return True
+        
+        if request.user.is_staff:
+            return True
+        
+        try:
+        # Attempt to retrieve the current user's shop
+            shop = self.request.user.shop_owner
+            return True
+        except User.DoesNotExist:
+            # User might not exist or doesn't have a shop (OneToOne relation)
+            return False
 
-        # Instance must have an attribute named `owner`.
-        return obj.owner == request.user
-    
+
 class IsAdminUserOrReadOnly(permissions.BasePermission):
     """
     Custom permission to allow admin users full access,

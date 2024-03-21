@@ -20,6 +20,7 @@ class Shop(models.Model):
 
     def __str__(self):
         return self.name
+
     
 def category_image_upload_path(instance, filename):
     """A utility function for generating category image upload path"""
@@ -42,6 +43,7 @@ class Category(models.Model):
         return self.name
 
     def delete(self, *args, **kwargs):
+        print("delete category")
         # Delete the image file from the file system
         if self.category_image:
             storage, path = self.category_image.storage, self.category_image.path
