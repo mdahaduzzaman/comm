@@ -137,6 +137,29 @@ EMAIL_PORT = 587
 
 PASSWORD_RESET_TIMEOUT = 600  # 10 minutes, in seconds
 
+# Logger
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'custom',
+        },
+    },
+    'formatters': {
+        'custom': {
+            'format': '========================================\n%(message)s\n========================================',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
 
 # jwt authentication setup
 REST_FRAMEWORK = {
